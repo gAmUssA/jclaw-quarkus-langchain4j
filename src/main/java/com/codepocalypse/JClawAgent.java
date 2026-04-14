@@ -10,6 +10,7 @@ import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.guardrail.InputGuardrails;
 import dev.langchain4j.service.guardrail.OutputGuardrails;
 import io.quarkiverse.langchain4j.RegisterAiService;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @RegisterAiService(
         tools = LocalTools.class,
@@ -17,6 +18,7 @@ import io.quarkiverse.langchain4j.RegisterAiService;
 )
 @InputGuardrails(PromptInjectionGuard.class)
 @OutputGuardrails(ResponseSanityGuard.class)
+@ApplicationScoped
 public interface JClawAgent {
 
   @SystemMessage("""
