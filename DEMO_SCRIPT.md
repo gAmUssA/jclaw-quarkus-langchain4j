@@ -11,15 +11,15 @@ Speaker notes + live-demo runbook for the Java/LangChain4j half of
 
 ## Stack
 
-| Layer | Version | Notes |
-|---|---|---|
-| JDK | 21 | `sdkman` default |
-| Build | Gradle 8.10 (wrapper) | `./gradlew` |
-| Runtime | Quarkus 3.34.3 | `quarkus-bom` |
-| LangChain4j | quarkus-langchain4j BOM 1.8.4 | pulls `langchain4j:1.12.2` |
-| LLM | Claude Sonnet 4 | `claude-sonnet-4-20250514` |
-| MCP server | [developer-events MCP](https://developer-events-mcp-54127830651.europe-west2.run.app/mcp) | Streamable HTTP at `/mcp` |
-| TUI client | TUI4J 0.3.3 | Bubble Tea port for Java |
+| Layer       | Version                                                                                   | Notes                      |
+|-------------|-------------------------------------------------------------------------------------------|----------------------------|
+| JDK         | 21                                                                                        | `sdkman` default           |
+| Build       | Gradle 8.10 (wrapper)                                                                     | `./gradlew`                |
+| Runtime     | Quarkus 3.34.3                                                                            | `quarkus-bom`              |
+| LangChain4j | quarkus-langchain4j BOM 1.8.4                                                             | pulls `langchain4j:1.12.2` |
+| LLM         | Claude Sonnet 4                                                                           | `claude-sonnet-4-20250514` |
+| MCP server  | [developer-events MCP](https://developer-events-mcp-54127830651.europe-west2.run.app/mcp) | Streamable HTTP at `/mcp`  |
+| TUI client  | TUI4J 0.3.3                                                                               | Bubble Tea port for Java   |
 
 ## Branch layout
 
