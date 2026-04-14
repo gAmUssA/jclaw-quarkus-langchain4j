@@ -71,6 +71,13 @@ git checkout round-2     # or round-3, round-4, round-5, round-6
 > always handle cleanly. **Restart dev mode after every
 > `git checkout`** for a reliable demo.
 
+### Or run every round in parallel via worktrees
+
+If you want all six rounds alive at once (so you can switch between
+them in seconds without rebuilds), see [`WORKTREES.md`](WORKTREES.md).
+Each round gets its own directory and port; the TUI just targets a
+different `http://localhost:808x`.
+
 After switching, your TUI client can stay running — just re-issue a
 message and it will hit the new backend. If you want to clear state,
 delete the memory directory:
