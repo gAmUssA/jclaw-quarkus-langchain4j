@@ -9,6 +9,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.jboss.logging.Logger;
 
 /**
@@ -30,8 +31,14 @@ public class SupervisorProducer {
     @Inject
     AgentTraceRecorder traceRecorder;
 
+    /**
+     * Qualified with {@code @Named("jclawSupervisor")} to avoid colliding with
+     * the synthetic {@code SupervisorAgent} bean that the
+     * {@code quarkus-langchain4j-agentic} extension auto-generates at build time.
+     */
     @Produces
     @ApplicationScoped
+    @Named("jclawSupervisor")
     public SupervisorAgent supervisor() {
         LOG.info("Building agentic supervisor with 3 specialist sub-agents + trace listener");
 
