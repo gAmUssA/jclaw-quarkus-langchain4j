@@ -1,13 +1,19 @@
 package com.codepocalypse;
 
+import com.codepocalypse.guardrails.PromptInjectionGuard;
+import com.codepocalypse.guardrails.ResponseSanityGuard;
 import com.codepocalypse.tools.LocalTools;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.guardrail.InputGuardrails;
+import dev.langchain4j.service.guardrail.OutputGuardrails;
 import io.quarkiverse.langchain4j.RegisterAiService;
 import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
 
 @RegisterAiService(tools = LocalTools.class)
+@InputGuardrails(PromptInjectionGuard.class)
+@OutputGuardrails(ResponseSanityGuard.class)
 public interface JClawAgent {
 
   @SystemMessage("""
