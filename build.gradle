@@ -17,6 +17,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-arc'
 
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-anthropic'
+    implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-mcp'
 
     implementation 'com.williamcallahan:tui4j:0.3.3'
 
