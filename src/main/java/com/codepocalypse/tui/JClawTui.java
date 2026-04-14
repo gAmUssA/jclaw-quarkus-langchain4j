@@ -267,6 +267,7 @@ public class JClawTui implements Model {
                     addSystem("forget failed: " + e.getMessage());
                 }
             }
+            case "/trace" -> fetchTrace();
             default -> addSystem("unknown command: " + cmd + " — try /help");
         }
 
@@ -288,7 +289,49 @@ public class JClawTui implements Model {
                   /session [id]      show or set the session id
                   /mode [chat|agent] show or set the target endpoint
                   /forget            delete this session's memory file
+                  /trace             show the last 20 agent trace events
                   /quit              exit the TUI (same as Esc)""";
+    }
+
+    /**
+     * Fetches {@code GET /agent/trace} and pretty-prints the last 20 events.
+     * Round 6 only — the endpoint doesn't exist on earlier branches.
+     */
+    private void fetchTrace() {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/agent/trace"))
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(10))
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() != 200) {
+                addSystem("/trace: HTTP " + resp.statusCode());
+                return;
+            }
+
+            // Cheap JSON formatting — strip array brackets, split on "},{", print tails.
+            String body = resp.body().trim();
+            if (body.equals("[]")) {
+                addSystem("/trace: (empty)");
+                return;
+            }
+            if (body.startsWith("[")) {
+                body = body.substring(1, body.length() - 1);
+            }
+            String[] items = body.split("\\},\\{");
+            int start = Math.max(0, items.length - 20);
+            addSystem("/trace: " + items.length + " events (showing last " + (items.length - start) + ")");
+            for (int i = start; i < items.length; i++) {
+                String item = items[i];
+                if (!item.startsWith("{")) item = "{" + item;
+                if (!item.endsWith("}")) item = item + "}";
+                addSystem("  " + item);
+            }
+        } catch (Exception e) {
+            addSystem("/trace failed: " + e.getMessage());
+        }
     }
 
     private Path memoryFileFor(String id) {
