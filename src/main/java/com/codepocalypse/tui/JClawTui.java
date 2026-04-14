@@ -15,13 +15,17 @@ import com.williamcallahan.tui4j.compat.bubbletea.input.MouseMessage;
 import com.williamcallahan.tui4j.compat.lipgloss.Style;
 import com.williamcallahan.tui4j.compat.lipgloss.color.Color;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,7 +39,8 @@ public class JClawTui implements Model {
     private static final int WHEEL_LINES = 3;
 
     private final String baseUrl;
-    private final String sessionId;
+    private String sessionId;          // mutable — /session <id>
+    private String endpoint = "/chat"; // mutable — /mode chat|agent
 
     private final Textarea textarea;
     private final Viewport viewport;
@@ -110,6 +115,12 @@ public class JClawTui implements Model {
                 String input = textarea.value().trim();
                 if (!input.isEmpty()) {
                     textarea.reset();
+
+                    // Slash commands are handled locally — no HTTP, no spinner.
+                    if (input.startsWith("/")) {
+                        return handleCommand(input);
+                    }
+
                     messages.add(userStyle.render("You: ") + input);
                     refreshViewport();
 
@@ -187,7 +198,7 @@ public class JClawTui implements Model {
     private String callAgentSync(String input) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/chat?sessionId=" + sessionId))
+                    .uri(URI.create(baseUrl + endpoint + "?sessionId=" + sessionId))
                     .header("Content-Type", "text/plain")
                     .timeout(Duration.ofSeconds(120))
                     .POST(HttpRequest.BodyPublishers.ofString(input))
@@ -200,6 +211,89 @@ public class JClawTui implements Model {
         } catch (Exception e) {
             return "Error - " + e.getMessage();
         }
+    }
+
+    // ---------- slash commands ----------
+
+    private UpdateResult<? extends Model> handleCommand(String input) {
+        String[] parts = input.split("\\s+", 2);
+        String cmd = parts[0].toLowerCase(Locale.ROOT);
+        String arg = parts.length > 1 ? parts[1].trim() : "";
+
+        // Echo the command as a dim input line so the audience sees what was typed.
+        messages.add(dimStyle.render("> " + input));
+
+        switch (cmd) {
+            case "/help", "/?" -> addSystem(helpText());
+            case "/clear" -> {
+                messages.clear();
+                refreshViewport();
+                return UpdateResult.from(this, null);
+            }
+            case "/quit", "/exit" -> {
+                return UpdateResult.from(this, QuitMessage::new);
+            }
+            case "/session" -> {
+                if (arg.isEmpty()) {
+                    addSystem("session: " + sessionId);
+                } else {
+                    sessionId = arg;
+                    addSystem("session -> " + sessionId);
+                }
+            }
+            case "/mode" -> {
+                if ("agent".equalsIgnoreCase(arg)) {
+                    endpoint = "/agent/chat";
+                    addSystem("mode -> agent  (POST " + endpoint + ")");
+                } else if ("chat".equalsIgnoreCase(arg)) {
+                    endpoint = "/chat";
+                    addSystem("mode -> chat   (POST " + endpoint + ")");
+                } else if (arg.isEmpty()) {
+                    addSystem("mode: " + ("/chat".equals(endpoint) ? "chat" : "agent")
+                            + "  (POST " + endpoint + ")");
+                } else {
+                    addSystem("usage: /mode [chat|agent]");
+                }
+            }
+            case "/forget" -> {
+                Path f = memoryFileFor(sessionId);
+                try {
+                    if (Files.deleteIfExists(f)) {
+                        addSystem("forgot " + f);
+                    } else {
+                        addSystem("nothing to forget at " + f);
+                    }
+                } catch (IOException e) {
+                    addSystem("forget failed: " + e.getMessage());
+                }
+            }
+            default -> addSystem("unknown command: " + cmd + " — try /help");
+        }
+
+        refreshViewport();
+        return UpdateResult.from(this, null);
+    }
+
+    private void addSystem(String text) {
+        for (String line : text.split("\n")) {
+            messages.add(dimStyle.render(line));
+        }
+    }
+
+    private String helpText() {
+        return """
+                commands:
+                  /help              show this
+                  /clear             clear the viewport (server memory unaffected)
+                  /session [id]      show or set the session id
+                  /mode [chat|agent] show or set the target endpoint
+                  /forget            delete this session's memory file
+                  /quit              exit the TUI (same as Esc)""";
+    }
+
+    private Path memoryFileFor(String id) {
+        String safe = id.replaceAll("[^a-zA-Z0-9._-]", "_");
+        return Path.of(System.getProperty("user.home"), ".jclaw", "memory", safe + ".json");
     }
 
     public record TickMessage() implements Message {}
