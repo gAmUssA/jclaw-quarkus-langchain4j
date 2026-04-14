@@ -1,13 +1,16 @@
 package com.codepocalypse;
 
+import com.codepocalypse.mcp.McpToolProviderSupplier;
 import com.codepocalypse.tools.LocalTools;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
-import io.quarkiverse.langchain4j.mcp.runtime.McpToolBox;
 
-@RegisterAiService(tools = LocalTools.class)
+@RegisterAiService(
+        tools = LocalTools.class,
+        toolProviderSupplier = McpToolProviderSupplier.class
+)
 public interface JClawAgent {
 
   @SystemMessage("""
@@ -24,6 +27,5 @@ public interface JClawAgent {
       - When asked about conferences or CFPs, USE your tools (don't just guess from memory)
       - When asked about time/date, USE getCurrentDateTime (don't apologize about not having real-time data)
       """)
-  @McpToolBox("events")
   String chat(@MemoryId String sessionId, @UserMessage String message);
 }
