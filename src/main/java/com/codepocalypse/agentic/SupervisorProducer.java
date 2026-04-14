@@ -6,6 +6,7 @@ import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.supervisor.SupervisorAgent;
 import dev.langchain4j.agentic.supervisor.SupervisorResponseStrategy;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -31,6 +32,9 @@ public class SupervisorProducer {
     @Inject
     AgentTraceRecorder traceRecorder;
 
+    @Inject
+    ToolProvider mcpToolProvider;
+
     /**
      * Qualified with {@code @Named("jclawSupervisor")} to avoid colliding with
      * the synthetic {@code SupervisorAgent} bean that the
@@ -40,10 +44,13 @@ public class SupervisorProducer {
     @ApplicationScoped
     @Named("jclawSupervisor")
     public SupervisorAgent supervisor() {
-        LOG.info("Building agentic supervisor with 3 specialist sub-agents + trace listener");
+        LOG.info("Building agentic supervisor with 3 specialist sub-agents (events -> MCP) + trace listener");
 
+        // Events specialist gets the same MCP tool provider that the monolithic
+        // /chat agent uses — so /mode agent can also hit the CFP MCP server.
         EventsSpecialist events = AgenticServices.agentBuilder(EventsSpecialist.class)
                 .chatModel(chatModel)
+                .toolProvider(mcpToolProvider)
                 .build();
 
         CalendarSpecialist calendar = AgenticServices.agentBuilder(CalendarSpecialist.class)
