@@ -1,9 +1,12 @@
 package com.codepocalypse.agentic;
 
+import com.codepocalypse.memory.FileChatMemoryStore;
 import com.codepocalypse.tools.LocalTools;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.supervisor.SupervisorAgent;
 import dev.langchain4j.agentic.supervisor.SupervisorResponseStrategy;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -31,31 +34,53 @@ public class SupervisorProducer {
     @Inject
     ToolProvider mcpToolProvider;
 
+    @Inject
+    FileChatMemoryStore memoryStore;
+
+    private ChatMemory newMemory(String memoryId) {
+        return MessageWindowChatMemory.builder()
+                .id(memoryId)
+                .maxMessages(20)
+                .chatMemoryStore(memoryStore)
+                .build();
+    }
+
     /**
      * Qualified with {@code @Named("jclawSupervisor")} to avoid colliding with
      * the synthetic {@code SupervisorAgent} bean that the
      * {@code quarkus-langchain4j-agentic} extension auto-generates at build time.
+     *
+     * <p>Each sub-agent gets a stable, named {@link ChatMemory} backed by
+     * {@link FileChatMemoryStore} — files end up at
+     * {@code ~/.jclaw/memory/{events,calendar,general}.json}.
+     * Memory is shared across {@code /agent/chat} sessions because
+     * {@code SupervisorAgent.invoke(String)} has no memoryId param; per-session
+     * memory in the agentic path would require either the declarative
+     * {@code @SupervisorAgent} annotation or a different framework version.
      */
     @Produces
     @ApplicationScoped
     @Named("jclawSupervisor")
     public SupervisorAgent supervisor() {
-        LOG.info("Building agentic supervisor with 3 specialist sub-agents (events -> MCP)");
+        LOG.info("Building agentic supervisor with 3 specialist sub-agents (events -> MCP) + persistent memory");
 
         // Events specialist gets the same MCP tool provider that the monolithic
         // /chat agent uses — so /mode agent can also hit the CFP MCP server.
         EventsSpecialist events = AgenticServices.agentBuilder(EventsSpecialist.class)
                 .chatModel(chatModel)
                 .toolProvider(mcpToolProvider)
+                .chatMemoryProvider(id -> newMemory("events"))
                 .build();
 
         CalendarSpecialist calendar = AgenticServices.agentBuilder(CalendarSpecialist.class)
                 .chatModel(chatModel)
                 .tools(localTools)
+                .chatMemoryProvider(id -> newMemory("calendar"))
                 .build();
 
         GeneralAssistant general = AgenticServices.agentBuilder(GeneralAssistant.class)
                 .chatModel(chatModel)
+                .chatMemoryProvider(id -> newMemory("general"))
                 .build();
 
         return AgenticServices.supervisorBuilder()
