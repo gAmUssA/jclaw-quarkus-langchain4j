@@ -19,6 +19,8 @@ dependencies {
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-anthropic'
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-mcp'
 
+    implementation 'dev.langchain4j:langchain4j-agentic'
+
     implementation 'com.williamcallahan:tui4j:0.3.3'
 
     testImplementation 'io.quarkus:quarkus-junit5'
