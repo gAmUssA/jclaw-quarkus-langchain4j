@@ -17,7 +17,11 @@ dependencies {
     implementation 'io.quarkus:quarkus-arc'
 
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-anthropic'
-    implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-mcp'
+
+    // Raw langchain4j-mcp client (not the Quarkus extension) — we build
+    // StreamableHttpMcpTransport + DefaultMcpClient programmatically in
+    // McpToolProviderProducer and expose the McpToolProvider as a CDI bean.
+    implementation 'dev.langchain4j:langchain4j-mcp'
 
     implementation 'com.williamcallahan:tui4j:0.3.3'
 
