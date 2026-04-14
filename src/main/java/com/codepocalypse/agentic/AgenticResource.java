@@ -2,6 +2,7 @@ package com.codepocalypse.agentic;
 
 import dev.langchain4j.agentic.supervisor.SupervisorAgent;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.core.MediaType;
 public class AgenticResource {
 
     @Inject
+    @Named("jclawSupervisor")
     SupervisorAgent supervisor;
 
     @POST
