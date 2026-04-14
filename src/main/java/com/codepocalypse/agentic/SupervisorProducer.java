@@ -1,5 +1,6 @@
 package com.codepocalypse.agentic;
 
+import com.codepocalypse.observability.AgentTraceRecorder;
 import com.codepocalypse.tools.LocalTools;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.supervisor.SupervisorAgent;
@@ -26,10 +27,13 @@ public class SupervisorProducer {
     @Inject
     LocalTools localTools;
 
+    @Inject
+    AgentTraceRecorder traceRecorder;
+
     @Produces
     @ApplicationScoped
     public SupervisorAgent supervisor() {
-        LOG.info("Building agentic supervisor with 3 specialist sub-agents");
+        LOG.info("Building agentic supervisor with 3 specialist sub-agents + trace listener");
 
         EventsSpecialist events = AgenticServices.agentBuilder(EventsSpecialist.class)
                 .chatModel(chatModel)
@@ -47,6 +51,7 @@ public class SupervisorProducer {
         return AgenticServices.supervisorBuilder()
                 .chatModel(chatModel)
                 .subAgents(events, calendar, general)
+                .listener(traceRecorder)
                 .supervisorContext("""
                         You are the supervisor for JClaw, a Java AI assistant.
                         Route each user request to the most appropriate specialist
