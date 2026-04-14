@@ -1,0 +1,11 @@
+### Round 1: Basic Agent — say hi
+POST http://localhost:8080/chat
+Content-Type: text/plain
+
+Hi! What are you and what can you do?
+
+### Round 1: Basic Agent — show off the system prompt
+POST http://localhost:8080/chat
+Content-Type: text/plain
+
+In one sentence, who built you and with what framework?

@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation enforcedPlatform("io.quarkiverse.langchain4j:quarkus-langchain4j-bom:${quarkusLangchain4jVersion}")
+
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+    implementation 'io.quarkus:quarkus-arc'
+
+    implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-anthropic'
+
+    implementation 'com.williamcallahan:tui4j:0.3.3'
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+// JavaExec run-task for the TUI doesn't work: Gradle pipes stdin through its
+// own streams, so the JVM never sees a real TTY and TUI4J can't enable raw
+// mode (Enter is swallowed, typed characters are double-echoed).
+// Instead, emit the runtime classpath to a file and let tui.sh exec java directly.
+tasks.register('tuiClasspath') {
+    group = 'application'
+    description = 'Write the TUI runtime classpath to build/tui-classpath.txt'
+    dependsOn 'classes'
+    def cpFile = layout.buildDirectory.file('tui-classpath.txt')
+    inputs.files(sourceSets.main.runtimeClasspath)
+    outputs.file(cpFile)
+    doLast {
+        def cp = sourceSets.main.runtimeClasspath.files.join(File.pathSeparator)
+        def f = cpFile.get().asFile
+        f.parentFile.mkdirs()
+        f.text = cp
+    }
+}
+
+group = 'com.codepocalypse'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
