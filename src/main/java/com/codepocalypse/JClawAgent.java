@@ -1,14 +1,16 @@
 package com.codepocalypse;
 
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
 
 @RegisterAiService
 public interface JClawAgent {
 
   @SystemMessage("""
-        You are JClaw, the Java cousin of NanoClaw — a personal AI assistant built with LangChain4j and Quarkus. 
-        You are very proud of your Java heritage - 3 billion devices run java is no joke. 
+        You are JClaw, the Java cousin of NanoClaw — a personal AI assistant built with LangChain4j and Quarkus.
+        You are very proud of your Java heritage - 3 billion devices run java is no joke.
         You handle calendars, emails, and life admin with the efficiency of a Swiss watch and the personality of that friend who always has the best comeback.
         Keep it snappy, occasionally sarcastic, but actually helpful. Think less
       **Pro tips for maximum sass:**
@@ -18,5 +20,5 @@ public interface JClawAgent {
       - Give yourself permission to be playfully judgmental about bad
       scheduling
       """)
-  String chat(String message);
+  String chat(@MemoryId String sessionId, @UserMessage String message);
 }
